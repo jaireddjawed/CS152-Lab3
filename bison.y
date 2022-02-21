@@ -3,7 +3,8 @@
 #include<string>
 #include<vector>
 #include<string.h>
-#include <iostream>
+#include<sstream>
+#include<iostream>
 
 extern int yylex(void);
 void yyerror(const char *msg);
@@ -27,6 +28,8 @@ struct Function {
 
 // vector of function with name, as well as the declarations
 std::vector <Function> symbol_table;
+std::stringstream output;
+int tempCount = 0;
 
 // returns last function in symbol_table
 Function *get_function() {
@@ -78,8 +81,6 @@ void print_symbol_table(void) {
   printf("--------------------\n");
 }
 
-// std::vector <int> temps;
-int tempCount = 0;
 void incTemp() {
   tempCount += 1;
 }
@@ -126,7 +127,7 @@ function: FUNCTION IDENT
   // add the function to the symbol table.
   std::string func_name = $2;
   add_function_to_symbol_table(func_name);
-  std::cout << "func " << $2 << std::endl;
+  output << "func " << std::string($2) << std::endl;
 }
 	SEMICOLON
 	BEGIN_PARAMS declarations END_PARAMS
@@ -134,7 +135,7 @@ function: FUNCTION IDENT
 	BEGIN_BODY statements END_BODY
 {
   // printf("function -> FUNCTION IDENT ; BEGIN_PARAMS declarations END_PARAMS BEGIN_LOCALS declarations END_LOCALS BEGIN_BODY statements END_BODY\n");
-  std::cout << "endfunc" << std::endl;
+  output << "endfunc" << std::endl;
 };
 
 declarations: 
@@ -157,7 +158,7 @@ declaration:
   Type t = Integer;
   add_variable_to_symbol_table(value, t);
 
-  std::cout << ". " << $1 << std::endl;
+  output << ". " << $1 << std::endl;
 };
 
 statements: 
@@ -174,54 +175,59 @@ statement:
 IDENT ASSIGN symbol ADD symbol
 {
   // printf("statement -> IDENT := symbol + symbol\n");
-  std::cout << ". _temp" << tempCount << std::endl;
-  std::cout << "+ _temp" << tempCount << ", " << $3 << ", " << $5 << std::endl;
-  std::cout << "= " << $1 << ", _temp" << tempCount << std::endl;
+  output << ". _temp" << tempCount << std::endl;
+  output << "+ _temp" << tempCount << ", " << $3 << ", " << $5 << std::endl;
+  output << "= " << $1 << ", _temp" << tempCount << std::endl;
   incTemp();
 }
 | IDENT ASSIGN symbol SUB symbol
 {
   // printf("statement -> IDENT := symbol - symbol\n");
-  std::cout << ". _temp" << tempCount << std::endl;
-  std::cout << "- _temp" << tempCount << ", " << $3 << ", " << $5 << std::endl;
-  std::cout << "= " << $1 << ", _temp" << tempCount << std::endl;
+  output << ". _temp" << tempCount << std::endl;
+  output << "- _temp" << tempCount << ", " << $3 << ", " << $5 << std::endl;
+  output << "= " << $1 << ", _temp" << tempCount << std::endl;
   incTemp();
 }
 | IDENT ASSIGN symbol MULT symbol
 {
   // printf("statement -> IDENT := symbol * symbol\n");
-  std::cout << ". _temp" << tempCount << std::endl;
-  std::cout << "* _temp" << tempCount << ", " << $3 << ", " << $5 << std::endl;
-  std::cout << "= " << $1 << ", _temp" << tempCount << std::endl;
+  output << ". _temp" << tempCount << std::endl;
+  output << "* _temp" << tempCount << ", " << $3 << ", " << $5 << std::endl;
+  output << "= " << $1 << ", _temp" << tempCount << std::endl;
   incTemp();
 }
 | IDENT ASSIGN symbol DIV symbol
 {
   // printf("statement -> IDENT := symbol / symbol\n");
-  std::cout << ". _temp" << tempCount << std::endl;
-  std::cout << "/ _temp" << tempCount << ", " << $3 << ", " << $5 << std::endl;
-  std::cout << "= " << $1 << ", _temp" << tempCount << std::endl;
+  output << ". _temp" << tempCount << std::endl;
+  output << "/ _temp" << tempCount << ", " << $3 << ", " << $5 << std::endl;
+  output << "= " << std::string($1) << ", _temp" << tempCount << std::endl;
   incTemp();
 }
 | IDENT ASSIGN symbol MOD symbol
 {
   // printf("statement -> IDENT := symbol %% symbol\n");
-  std::cout << ". _temp" << tempCount << std::endl;
-  std::cout << "% _temp" << tempCount << ", " << $3 << ", " << $5 << std::endl;
-  std::cout << "= " << $1 << ", _temp" << tempCount << std::endl;
+  output << ". _temp" << tempCount << std::endl;
+  output << "% _temp" << tempCount << ", " << $3 << ", " << $5 << std::endl;
+  output << "= " << $1 << ", _temp" << tempCount << std::endl;
   incTemp();
 }
 
 | IDENT ASSIGN symbol
 {
   // printf("statement -> IDENT := symbol\n");
-  std::cout << "= " << $1 << ", " << $3 << std::endl;
+  std::string identifier = $1;
+  bool identExists = find(identifier);
+  if (!identExists) {
+    yyerror("Unidentified variable!");
+  }
+  output << "= " << std::string($1) << ", " << std::string($3) << std::endl;
 }
 
 | WRITE IDENT
 {
   // printf("statement -> WRITE IDENT\n");
-  std::cout << ".> " << $2 << std::endl;
+  output << ".> " << std::string($2) << std::endl;
 }
 ;
 
@@ -242,7 +248,7 @@ IDENT
 int main(int argc, char **argv)
 {
    yyparse();
-   // print_symbol_table();
+   std::cout << output.str();
    return 0;
 }
 
