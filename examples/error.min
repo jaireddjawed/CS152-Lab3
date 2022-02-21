@@ -11,7 +11,7 @@ endlocals
 
 beginbody
   ## This is an error
-  ## error := 150;
+  error := 150;
 
   a := a + 12; ## + a, a, 12
 
